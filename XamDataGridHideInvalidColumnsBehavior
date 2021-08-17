@@ -1,0 +1,77 @@
+using System.Linq;
+using Infragistics.Windows.DataPresenter;
+using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Interactivity;
+
+namespace Behaviors
+{
+    public class XamDataGridHideInvalidColumnsBehavior : Behavior<XamDataGrid>
+    {
+        public static ObservableCollection<string> GetValidColumns(Control control)
+        {
+            return (ObservableCollection<string>)control.GetValue(ValidColumns);
+        }
+
+        public static void SetValidColumns(Control control, ObservableCollection<string> value)
+        {
+            control.SetValue(ValidColumns, value);
+        }
+
+        public static readonly DependencyProperty ValidColumns =
+            DependencyProperty.RegisterAttached(
+            nameof(ValidColumns),
+            typeof(ObservableCollection<string>),
+            typeof(XamDataGridHideInvalidColumnsBehavior),
+            new UIPropertyMetadata(null, WhenValidChanged));
+
+        public static ObservableCollection<string> GetInvalidColumns(Control control)
+        {
+            return (ObservableCollection<string>)control.GetValue(InvalidColumns);
+        }
+
+        public static void SetInvalidColumns(Control control, ObservableCollection<string> value)
+        {
+            control.SetValue(InvalidColumns, value);
+        }
+
+        public static readonly DependencyProperty InvalidColumns =
+            DependencyProperty.RegisterAttached(
+            nameof(InvalidColumns),
+            typeof(ObservableCollection<string>),
+            typeof(XamDataGridHideInvalidColumnsBehavior),
+            new UIPropertyMetadata(null, WhenInvalidChanged));
+
+        private static void WhenValidChanged(DependencyObject depObj, DependencyPropertyChangedEventArgs e)
+        {
+            SetVisibility(depObj, e.NewValue, Visibility.Visible);
+        }
+
+        private static void WhenInvalidChanged(DependencyObject depObj, DependencyPropertyChangedEventArgs e)
+        {
+            SetVisibility(depObj, e.NewValue, Visibility.Collapsed);
+        }
+
+        private static void SetVisibility(DependencyObject depObj, object newValue, Visibility visibility)
+        {
+            var dataGrid = (XamDataGrid)depObj;
+            if (dataGrid == null)
+                return;
+
+            var layout = dataGrid.FieldLayouts.FirstOrDefault();
+            if (layout == null)
+                return;
+
+            var guide = ((ObservableCollection<string>)newValue);
+            if (guide == null)
+                return;
+
+            foreach (var field in layout.Fields)
+            {
+                if (guide.Contains(field.Name))
+                    field.Visibility = visibility;
+            }
+        }
+    }
+}
